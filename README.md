@@ -1,4 +1,4 @@
-# 🏗️ Chatty - .NET Onion Architecture Demo
+# 🏗️ OnionArchDemo - .NET Onion Architecture Demo
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue.svg)](https://dotnet.microsoft.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-Onion-orange.svg)](https://en.wikipedia.org/wiki/Onion_architecture)
@@ -24,7 +24,7 @@ A comprehensive .NET demo project showcasing **Onion Architecture** with clean s
 
 ## 🏗️ Overview
 
-**Chatty** is a demonstration project that implements the **Onion Architecture** (also known as Clean Architecture) in .NET 8. This architecture promotes:
+**OnionArchDemo** is a demonstration project that implements the **Onion Architecture** (also known as Clean Architecture) in .NET 8. This architecture promotes:
 
 - 🔄 **Dependency Inversion**: High-level modules don't depend on low-level modules
 - 🧩 **Separation of Concerns**: Clear boundaries between different layers
@@ -108,7 +108,7 @@ flowchart LR
 ## 📁 Project Structure
 
 ```
-Chatty/
+OnionArchDemo/
 ├── 🏛️ Domain/                          # Core Business Logic
 │   ├── Contracts/                      # Interfaces & Contracts
 │   │   ├── IGenaricRepository.cs      # Generic Repository Interface
@@ -148,7 +148,7 @@ Chatty/
 │   ├── DTOs/                          # Data Transfer Objects
 │   └── Enums/                         # Shared Enumerations
 │
-└── 🚀 Chatty/                         # Web API Project
+└── 🚀 OnionArchDemo/                   # Web API Project
     ├── Controllers/                   # API Controllers
     ├── Program.cs                     # Application Entry Point
     └── appsettings.json              # Configuration
@@ -191,8 +191,8 @@ Before running this project, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/chatty.git
-cd chatty
+git clone https://github.com/yourusername/onionarchdemo.git
+cd onionarchdemo
 ```
 
 ### 2. Restore Dependencies
@@ -203,12 +203,12 @@ dotnet restore
 
 ### 3. Configure Database Connection
 
-Update the connection string in `Chatty/appsettings.json`:
+Update the connection string in `OnionArchDemo/appsettings.json`:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=ChattyDb;Trusted_Connection=true;MultipleActiveResultSets=true"
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=OnionArchDemoDb;Trusted_Connection=true;MultipleActiveResultSets=true"
   }
 }
 ```
@@ -225,7 +225,7 @@ dotnet ef database update
 ### Development Mode
 
 ```bash
-cd Chatty
+cd OnionArchDemo
 dotnet run
 ```
 
@@ -237,7 +237,7 @@ The application will be available at:
 
 ```bash
 dotnet publish -c Release
-dotnet Chatty.dll
+dotnet OnionArchDemo.dll
 ```
 
 ## 📊 Database Configuration
@@ -411,8 +411,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for the .NET Community**
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/chatty?style=social)](https://github.com/yourusername/chatty)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/chatty?style=social)](https://github.com/yourusername/chatty)
-[![GitHub issues](https://img.shields.io/github/issues/yourusername/chatty)](https://github.com/yourusername/chatty/issues)
+[![GitHub stars](https://img.shields.io/github/stars/yourusername/onionarchdemo?style=social)](https://github.com/yourusername/onionarchdemo)
+[![GitHub forks](https://img.shields.io/github/forks/yourusername/onionarchdemo?style=social)](https://github.com/yourusername/onionarchdemo)
+[![GitHub issues](https://img.shields.io/github/issues/yourusername/onionarchdemo)](https://github.com/yourusername/onionarchdemo/issues)
 
 </div>
