@@ -2,11 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Presistence.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Presistence.Repositories;
+using Domain.Contracts;
 
 namespace Presistence
 {
@@ -19,6 +16,9 @@ namespace Presistence
 				configuration.GetConnectionString("DefaultConnection"),
 			sqlOptions => sqlOptions.EnableRetryOnFailure()
 			));
+			
+			services.AddScoped<ILoggingRepository, LoggingRepository>();
+			
 			return services;
 		}
 	}

@@ -20,6 +20,6 @@ namespace Domain.Exceptions
 		{
 		}
 	}
-	{
-	}
+	
+	
 }

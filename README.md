@@ -10,6 +10,7 @@ A comprehensive .NET demo project showcasing **Onion Architecture** with clean s
 
 - [🏗️ Overview](#-overview)
 - [🎯 Architecture](#-architecture)
+- [📊 Logging Architecture](#-logging-architecture)
 - [📁 Project Structure](#-project-structure)
 - [🚀 Features](#-features)
 - [⚙️ Prerequisites](#️-prerequisites)
@@ -105,6 +106,291 @@ flowchart LR
     end
 ```
 
+## 📊 Logging Architecture
+
+### Logging Layer Overview
+
+The project implements a comprehensive logging strategy using **Serilog** with structured logging across all layers. The logging architecture follows the Onion Architecture principles, ensuring that logging concerns are properly separated and injected where needed.
+
+```mermaid
+graph TB
+    subgraph "🌐 Presentation Layer"
+        A[Controllers]
+        B[SignalR Hubs]
+        A1[Request/Response Logging]
+        B1[Real-time Event Logging]
+    end
+    
+    subgraph "⚙️ Application Layer"
+        C[Services]
+        C1[Business Operation Logging]
+        C2[Performance Monitoring]
+    end
+    
+    subgraph "🔧 Infrastructure Layer"
+        D[Persistence Layer]
+        D1[Database Operation Logging]
+        D2[Query Performance Logging]
+        D3[Transaction Logging]
+    end
+    
+    subgraph "📝 Logging Infrastructure"
+        E[Serilog]
+        F[Structured Logging]
+        G[Multiple Sinks]
+        H[Log Aggregation]
+    end
+    
+    A --> A1
+    B --> B1
+    C --> C1
+    C --> C2
+    D --> D1
+    D --> D2
+    D --> D3
+    
+    A1 --> E
+    B1 --> E
+    C1 --> E
+    C2 --> E
+    D1 --> E
+    D2 --> E
+    D3 --> E
+    
+    E --> F
+    E --> G
+    E --> H
+    
+    style E fill:#ffeb3b
+    style F fill:#ffeb3b
+    style G fill:#ffeb3b
+    style H fill:#ffeb3b
+```
+
+### Logging Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Controller
+    participant Service
+    participant Repository
+    participant LoggingRepo
+    participant Serilog
+    participant LogSinks
+    
+    Client->>Controller: HTTP Request
+    Note over Controller: Log Request Details
+    
+    Controller->>Service: Call Business Logic
+    Note over Service: Log Business Operation Start
+    
+    Service->>Repository: Data Access Request
+    Repository->>LoggingRepo: Log Database Operation
+    
+    LoggingRepo->>Serilog: Structured Log Entry
+    Serilog->>LogSinks: Write to Multiple Destinations
+    
+    Repository-->>Service: Data Result
+    Note over Service: Log Business Operation Success
+    
+    Service-->>Controller: Business Result
+    Note over Controller: Log Response Details
+    
+    Controller-->>Client: HTTP Response
+```
+
+### Logging Repository Pattern
+
+The `LoggingRepository` implements a specialized logging pattern for database operations, providing:
+
+- **Performance Monitoring**: Track operation duration
+- **Structured Logging**: Consistent log format across all database operations
+- **Error Context**: Rich error information with entity and ID context
+- **Async Support**: Non-blocking logging for performance-critical operations
+
+```mermaid
+classDiagram
+    class ILoggingRepository {
+        <<interface>>
+        +LogDatabaseOperation(operation, entity, id)
+        +LogDatabaseError(operation, entity, ex, id)
+        +LogDatabaseOperationAsync(operation, entity, dbOperation, id)
+    }
+    
+    class LoggingRepository {
+        -ILogger _logger
+        +LogDatabaseOperation(operation, entity, id)
+        +LogDatabaseError(operation, entity, ex, id)
+        +LogDatabaseOperationAsync(operation, entity, dbOperation, id)
+    }
+    
+    class ILogger {
+        <<interface>>
+        +LogInformation(message, args)
+        +LogError(ex, message, args)
+    }
+    
+    ILoggingRepository <|.. LoggingRepository
+    LoggingRepository --> ILogger
+```
+
+### Logging Configuration Structure
+
+```mermaid
+graph LR
+    subgraph "Configuration Sources"
+        A[appsettings.json]
+        B[appsettings.Development.json]
+        C[Environment Variables]
+    end
+    
+    subgraph "Serilog Configuration"
+        D[Minimum Log Level]
+        E[Log Sinks]
+        F[Enrichers]
+        G[Filters]
+    end
+    
+    subgraph "Log Destinations"
+        H[Console]
+        I[File System]
+        J[Database]
+        K[External Services]
+    end
+    
+    A --> D
+    B --> D
+    C --> D
+    
+    D --> E
+    E --> H
+    E --> I
+    E --> J
+    E --> K
+    
+    style D fill:#4caf50
+    style E fill:#4caf50
+    style F fill:#4caf50
+    style G fill:#4caf50
+```
+
+### Logging Usage Examples
+
+#### 1. **Database Operation Logging**
+```csharp
+// In Repository Layer
+public async Task<User> GetByIdAsync(int id)
+{
+    return await _loggingRepository.LogDatabaseOperationAsync(
+        "SELECT",           // Operation type
+        "User",            // Entity name
+        async () => await _context.Users.FindAsync(id),  // Database operation
+        id                 // Entity ID for context
+    );
+}
+```
+
+#### 2. **Business Operation Logging**
+```csharp
+// In Service Layer
+public async Task<bool> ProcessUserRequest(int userId)
+{
+    _logger.LogInformation("Processing user request for User ID: {UserId}", userId);
+    
+    try
+    {
+        var result = await _userRepository.ProcessRequestAsync(userId);
+        _logger.LogInformation("User request processed successfully for User ID: {UserId}", userId);
+        return result;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to process user request for User ID: {UserId}", userId);
+        throw;
+    }
+}
+```
+
+#### 3. **Request/Response Logging**
+```csharp
+// In Controller Layer
+[HttpGet("{id}")]
+public async Task<IActionResult> GetUser(int id)
+{
+    _logger.LogInformation("GET request received for user with ID: {UserId}", id);
+    
+    try
+    {
+        var user = await _userService.GetByIdAsync(id);
+        _logger.LogInformation("User retrieved successfully. ID: {UserId}, Name: {UserName}", id, user.Name);
+        return Ok(user);
+    }
+    catch (NotFoundException ex)
+    {
+        _logger.LogWarning("User not found with ID: {UserId}", id);
+        return NotFound();
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving user with ID: {UserId}", id);
+        return StatusCode(500, "Internal server error");
+    }
+}
+```
+
+### Logging Benefits
+
+| Benefit | Description | Implementation |
+|---------|-------------|----------------|
+| **🔍 Observability** | Complete visibility into application behavior | Structured logging with context |
+| **📊 Performance Monitoring** | Track operation duration and bottlenecks | Automatic timing in LoggingRepository |
+| **🐛 Debugging** | Rich context for troubleshooting | Entity IDs, operation types, error details |
+| **📈 Analytics** | Log analysis for business insights | Structured format for easy parsing |
+| **🔒 Compliance** | Audit trail for regulatory requirements | Complete operation logging |
+| **🚀 Production Support** | Real-time monitoring and alerting | Multiple log sinks and formats |
+
+### Log Sinks Configuration
+
+The project supports multiple log destinations:
+
+```json
+{
+  "Serilog": {
+    "Using": ["Serilog.Sinks.Console", "Serilog.Sinks.File", "Serilog.Sinks.Seq"],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/app-.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 31
+        }
+      },
+      {
+        "Name": "Seq",
+        "Args": {
+          "serverUrl": "http://localhost:5341"
+        }
+      }
+    ]
+  }
+}
+```
+
 ## 📁 Project Structure
 
 ```
@@ -166,6 +452,8 @@ OnionArchDemo/
 - **🗄️ Entity Framework Core**: ORM with SQL Server
 - **📋 AutoMapper**: Object-to-object mapping
 - **🔒 Exception Handling**: Centralized error management
+- **📝 Structured Logging**: Comprehensive logging with Serilog
+- **📊 Performance Monitoring**: Database operation timing and metrics
 
 ### 🛠️ Technical Stack
 
@@ -176,6 +464,8 @@ OnionArchDemo/
 - **AutoMapper**: Object mapping
 - **Swagger/OpenAPI**: API documentation
 - **SignalR**: Real-time communication (planned)
+- **Serilog**: Structured logging framework
+- **Microsoft.Extensions.Logging**: Logging abstraction
 
 ## ⚙️ Prerequisites
 
@@ -295,6 +585,26 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 ```
 
+### Logging Configuration Setup
+
+```csharp
+// Program.cs
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/app-.log", rollingInterval: RollingInterval.Day)
+    .WriteTo.Seq("http://localhost:5341"));
+```
+
+The logging configuration supports:
+- **Console Logging**: For development and debugging
+- **File Logging**: Daily rolling log files with retention
+- **Structured Logging**: JSON format for log aggregation tools
+- **Performance Monitoring**: Automatic timing for database operations
+- **Error Context**: Rich error information with stack traces
+
 ## 🧪 Testing
 
 ### Running Tests
@@ -366,17 +676,81 @@ sequenceDiagram
     participant Controller
     participant Service
     participant Repository
+    participant LoggingRepo
     participant Database
     
     Client->>Controller: HTTP Request
+    Note over Controller: Log Request Details
+    
     Controller->>Service: Call Business Logic
-    Service->>Repository: Data Access
+    Note over Service: Log Business Operation Start
+    
+    Service->>Repository: Data Access Request
+    Repository->>LoggingRepo: Log Database Operation Start
+    
     Repository->>Database: Query/Command
     Database-->>Repository: Result
+    
+    Repository->>LoggingRepo: Log Database Operation Success
+    LoggingRepo-->>Repository: Logging Complete
+    
     Repository-->>Service: Data
+    Note over Service: Log Business Operation Success
+    
     Service-->>Controller: Business Result
+    Note over Controller: Log Response Details
+    
     Controller-->>Client: HTTP Response
 ```
+
+## 🔍 Logging Best Practices & Troubleshooting
+
+### Best Practices
+
+1. **Use Structured Logging**: Always use structured logging with parameters instead of string concatenation
+   ```csharp
+   // ✅ Good
+   _logger.LogInformation("User {UserId} accessed {Resource}", userId, resourceName);
+   
+   // ❌ Bad
+   _logger.LogInformation("User " + userId + " accessed " + resourceName);
+   ```
+
+2. **Log at Appropriate Levels**:
+   - **Trace**: Detailed debugging information
+   - **Debug**: General debugging information
+   - **Information**: General application flow
+   - **Warning**: Unexpected but handled situations
+   - **Error**: Errors that need immediate attention
+   - **Fatal**: Application cannot continue
+
+3. **Include Context**: Always include relevant context (IDs, operation types, entity names)
+4. **Performance Considerations**: Use async logging for performance-critical operations
+5. **Error Logging**: Always log exceptions with context and stack traces
+
+### Troubleshooting Common Issues
+
+#### Log Files Not Created
+- Check if the `logs` directory exists
+- Verify write permissions for the application
+- Check Serilog configuration in `appsettings.json`
+
+#### Performance Issues
+- Ensure logging is not blocking main operations
+- Use async logging methods when possible
+- Configure appropriate log levels for production
+
+#### Missing Logs
+- Verify log level configuration
+- Check if logs are being written to different sinks
+- Ensure Serilog is properly configured in `Program.cs`
+
+### Log Analysis Tools
+
+- **Seq**: For log aggregation and analysis
+- **ELK Stack**: Elasticsearch, Logstash, Kibana
+- **Azure Application Insights**: For Azure-hosted applications
+- **Custom Scripts**: Parse structured logs for specific metrics
 
 ## 🤝 Contributing
 
@@ -394,6 +768,7 @@ We welcome contributions! Please follow these steps:
 - Add unit tests for new features
 - Update documentation as needed
 - Ensure all tests pass before submitting
+- Follow logging best practices when adding new features
 
 ## 📄 License
 

@@ -8,14 +8,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.csproj" />
-    <ProjectReference Include="..\ServiceAbstraction\ServiceAbstraction.csproj" />
     <ProjectReference Include="..\SharedData\SharedData.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="CoreServices\" />
     <Folder Include="Auto_Mapper_Profile\" />
-    <Folder Include="Specefication_Implementation\" />
+    <Folder Include="Exception_Implementation\" />
   </ItemGroup>
 
 </Project>
