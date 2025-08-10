@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Domain.Contracts
+namespace ServiceAbstraction
 {
     public interface ILoggingService
     {

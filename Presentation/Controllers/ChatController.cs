@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Domain.Contracts;
+using ServiceAbstraction;
 using System;
 using System.Threading.Tasks;
 

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Service.CoreServices;
-using Domain.Contracts;
+using ServiceAbstraction;
 
 namespace Service
 {
